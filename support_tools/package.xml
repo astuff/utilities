@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>support_tools</name>
+  <version>1.11.0</version>
+  <description>The Autoware support_tools package</description>
+  <maintainer email="jwhitley@autonomoustuff.com">Joshua Whitley</maintainer>
+  <author email="jwhitley@autonomoustuff.com">Joshua Whitley</author>
+  <license>Apache 2</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>autoware_build_flags</depend>
+</package>
