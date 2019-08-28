@@ -44,7 +44,7 @@
 
 namespace opendrive_converter
 {
-	
+
 	bool exists(autoware_map_msgs::LaneArray &lanes, int lane_id){
 		for(const auto lane: lanes.data){
 			if(lane_id == lane.lane_id) return true;

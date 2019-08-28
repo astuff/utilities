@@ -555,9 +555,9 @@ void OpenDriveRoad::createRoadLanes(std::vector<PlannerHNS::Lane>& lanes_list)
 		insertToRoad = std::bind(&OpenDriveRoad::insertUniqueFromRoadIds, this, _1, _2, _3);
 		insertFromRoad = std::bind(&OpenDriveRoad::insertUniqueToRoadIds, this, _1, _2, _3);
 		insertToSection = std::bind(&OpenDriveRoad::insertUniqueFromSectionIds, this, _1, _2, _3);
-		insertFromSection = std::bind(&OpenDriveRoad::insertUniqueToSectionIds, this, _1, _2, _3);		
+		insertFromSection = std::bind(&OpenDriveRoad::insertUniqueToSectionIds, this, _1, _2, _3);
 	}
-	
+
 	for(unsigned int i=0; i < sections_.size(); i++)
 	{
 		RoadSection* p_sec = & sections_.at(i);
@@ -602,12 +602,12 @@ void OpenDriveRoad::createRoadLanes(std::vector<PlannerHNS::Lane>& lanes_list)
 			}else{
 				insertFromSection(p_sec->id_-1, p_r_l, op_lane);
 			}
-			if( i == sections_.size()-1){					
+			if( i == sections_.size()-1){
 				insertToRoad(p_sec->id_, p_r_l->id_, op_lane);
 			}else{
 				insertToSection(p_sec->id_+1, p_r_l, op_lane);
 			}
-			
+
 			lanes_list.push_back(op_lane);
 		}
 	}
@@ -671,7 +671,7 @@ void OpenDriveRoad::createSectionPoints(const RoadCenterInfo& ref_info, std::vec
 			p_op_lane->points.push_back(p);
 
 			accum_offset_width += lane_width;
-			
+
 			if(!exists(left_lane_ids, combined_lane_id))
 			{
 				left_lane_ids.push_back(combined_lane_id);
@@ -709,7 +709,7 @@ void OpenDriveRoad::createSectionPoints(const RoadCenterInfo& ref_info, std::vec
 			p_op_lane->points.push_back(p);
 
 			accum_offset_width += lane_width;
-			
+
 			if(!exists(right_lane_ids, combined_lane_id))
 			{
 				right_lane_ids.push_back(combined_lane_id);
@@ -749,7 +749,7 @@ void OpenDriveRoad::getRoadLanes(std::vector<PlannerHNS::Lane>& lanes_list, doub
 			std::cout << " >>>>> Can't Find Section:  " << ref_info.at(i).ds_ << std::endl;
 		}
 	}
-	
+
 	if(keep_right_)
 	{
 			for( auto id: left_lane_ids )
@@ -780,7 +780,7 @@ void OpenDriveRoad::getRoadLanes(std::vector<PlannerHNS::Lane>& lanes_list, doub
 }
 
 std::vector<Connection> OpenDriveRoad::getLastSectionConnections(OpenDriveRoad *_p_successor_road)
-{	
+{
 		std::vector<Connection> connections_list;
 		Connection conn;
 
@@ -788,14 +788,14 @@ std::vector<Connection> OpenDriveRoad::getLastSectionConnections(OpenDriveRoad *
 		{
 			return connections_list;
 		}
-		
+
 		//for right lanes
 		RoadSection* p_l_sec = getLastSection();
 		if(p_l_sec != nullptr)
 		{
 			conn.incoming_road_ = id_;
 			conn.incoming_section_ = p_l_sec->id_;
-			conn.outgoing_road_ = _p_successor_road->id_; 
+			conn.outgoing_road_ = _p_successor_road->id_;
 			conn.outgoing_section_ = 0;
 
 			for(unsigned int i =0 ; i < p_l_sec->right_lanes_.size(); i++)
@@ -805,7 +805,7 @@ std::vector<Connection> OpenDriveRoad::getLastSectionConnections(OpenDriveRoad *
 					int _to_id = p_l_sec->right_lanes_.at(i).to_lane_.at(0).to_lane_id;
 					conn.lane_links.push_back(std::make_pair(p_l_sec->right_lanes_.at(i).id_, _to_id));
 				}
-				
+
 				if(conn.lane_links.size() > 0)
 				{
 					connections_list.push_back(conn);
@@ -813,13 +813,13 @@ std::vector<Connection> OpenDriveRoad::getLastSectionConnections(OpenDriveRoad *
 				}
 			}
 		}
-		
+
 		//for left lanes
 		if(p_l_sec != nullptr )
 		{
 			conn.outgoing_road_ = id_;
 			conn.outgoing_section_ = p_l_sec->id_;
-			conn.incoming_road_ = _p_successor_road->id_; 
+			conn.incoming_road_ = _p_successor_road->id_;
 			conn.incoming_section_ = 0;
 
 			for(unsigned int i =0 ; i < p_l_sec->left_lanes_.size(); i++)
@@ -829,7 +829,7 @@ std::vector<Connection> OpenDriveRoad::getLastSectionConnections(OpenDriveRoad *
 					int _from_id = p_l_sec->left_lanes_.at(i).from_lane_.at(0).from_lane_id;
 					conn.lane_links.push_back(std::make_pair( _from_id, p_l_sec->left_lanes_.at(i).id_));
 				}
-				
+
 				if(conn.lane_links.size() > 0)
 				{
 					connections_list.push_back(conn);
@@ -837,7 +837,7 @@ std::vector<Connection> OpenDriveRoad::getLastSectionConnections(OpenDriveRoad *
 				}
 			}
 		}
-		
+
 		return connections_list;
 }
 
@@ -851,15 +851,15 @@ std::vector<Connection> OpenDriveRoad::getFirstSectionConnections( OpenDriveRoad
 	{
 		return connections_list;
 	}
-	
+
 	//for right lanes
 	RoadSection* p_f_sec =  getFirstSection();
-	RoadSection* p_prev_sec = _p_predecessor_road->getLastSection(); 
+	RoadSection* p_prev_sec = _p_predecessor_road->getLastSection();
 	if(p_prev_sec != nullptr &&  p_f_sec != nullptr)
 	{
 		conn.outgoing_road_ = id_;
 		conn.outgoing_section_ = p_f_sec->id_;
-		conn.incoming_road_ = _p_predecessor_road->id_; 
+		conn.incoming_road_ = _p_predecessor_road->id_;
 		conn.incoming_section_ = p_prev_sec->id_;
 
 		for(unsigned int i =0 ; i < p_f_sec->right_lanes_.size(); i++)
@@ -869,22 +869,22 @@ std::vector<Connection> OpenDriveRoad::getFirstSectionConnections( OpenDriveRoad
 				int _from_id = p_f_sec->right_lanes_.at(i).from_lane_.at(0).from_lane_id;
 				conn.lane_links.push_back(std::make_pair(_from_id, p_f_sec->right_lanes_.at(i).id_));
 			}
-			
+
 			if(conn.lane_links.size() > 0)
 			{
 				connections_list.push_back(conn);
 				conn.lane_links.clear();
 			}
-		}		
+		}
 	}
 
-	 
-	//left lanes 
+
+	//left lanes
 	if(p_prev_sec != nullptr && p_f_sec != nullptr)
 	{
 		conn.incoming_road_ = id_;
 		conn.incoming_section_ = p_f_sec->id_;
-		conn.outgoing_road_ = _p_predecessor_road->id_; 
+		conn.outgoing_road_ = _p_predecessor_road->id_;
 		conn.outgoing_section_ = p_prev_sec->id_;
 
 		for(unsigned int i =0 ; i < p_f_sec->left_lanes_.size(); i++)
@@ -902,21 +902,23 @@ std::vector<Connection> OpenDriveRoad::getFirstSectionConnections( OpenDriveRoad
 			}
 		}
 	}
-	
+
 	return connections_list;
 }
 
 OBJECT_TYPE OpenDriveRoad::getObjTypeFromText(const std::string& autoware_type)
 {
-	if(autoware_type.compare("TRAFFIC_LIGHT"))
+	// std::cout << "Compare: TRAFFIC_LIGHT , " << autoware_type << std::endl;
+
+	if(autoware_type.compare("TRAFFIC_LIGHT") == 0)
 	{
 		return TRAFFIC_LIGHT;
 	}
-	else if(autoware_type.compare("ROAD_SIGN"))
+	else if(autoware_type.compare("ROAD_SIGN") == 0)
 	{
 		return ROAD_SIGN;
 	}
-	else if(autoware_type.compare("ROAD_MARK"))
+	else if(autoware_type.compare("ROAD_MARK") == 0)
 	{
 		return ROAD_MARK;
 	}
@@ -934,6 +936,7 @@ OBJECT_TYPE OpenDriveRoad::getAutowareMainTypeFromCode(const std::string& countr
 		{
 			if(p_country_signal_codes_->at(i).first.compare(country_code) == 0)
 			{
+				// Loop over country code data
 				for(unsigned int j=0; j < p_country_signal_codes_->at(i).second.size(); j++)
 				{
 					if(p_country_signal_codes_->at(i).second.at(j).id_.compare(type) == 0 &&
@@ -951,15 +954,15 @@ OBJECT_TYPE OpenDriveRoad::getAutowareMainTypeFromCode(const std::string& countr
 
 TRAFFIC_LIGHT_TYPE OpenDriveRoad::getLightTypeFromText(const std::string& autoware_type)
 {
-	if(autoware_type.compare("VERTICAL_DEFAULT_LIGHT"))
+	if(autoware_type.compare("VERTICAL_DEFAULT_LIGHT") == 0)
 	{
 		return VERTICAL_DEFAULT_LIGHT;
 	}
-	else if(autoware_type.compare("HORIZONTAL_DEFAULTLIGHT"))
+	else if(autoware_type.compare("HORIZONTAL_DEFAULTLIGHT") == 0)
 	{
 		return HORIZONTAL_DEFAULTLIGHT;
 	}
-	else if(autoware_type.compare("PEDESTRIAN_DEFAULT_LIGHT"))
+	else if(autoware_type.compare("PEDESTRIAN_DEFAULT_LIGHT") == 0)
 	{
 		return PEDESTRIAN_DEFAULT_LIGHT;
 	}
@@ -994,15 +997,15 @@ TRAFFIC_LIGHT_TYPE OpenDriveRoad::getAutowareLightTypeFromCode(const std::string
 
 ROAD_SIGN_TYPE OpenDriveRoad::getSignTypeFromText(const std::string& autoware_type)
 {
-	if(autoware_type.compare("SPEED_LIMIT_SIGN"))
+	if(autoware_type.compare("SPEED_LIMIT_SIGN") == 0)
 	{
 		return SPEED_LIMIT_SIGN;
 	}
-	else if(autoware_type.compare("STOP_SIGN"))
+	else if(autoware_type.compare("STOP_SIGN") == 0)
 	{
 		return STOP_SIGN;
 	}
-	else if(autoware_type.compare("NO_PARKING_SIGN"))
+	else if(autoware_type.compare("NO_PARKING_SIGN") == 0)
 	{
 		return NO_PARKING_SIGN;
 	}
@@ -1038,43 +1041,43 @@ ROAD_SIGN_TYPE OpenDriveRoad::getAutowareRoadSignTypeFromCode(const std::string&
 
 ROAD_MARK_TYPE OpenDriveRoad::getMarkTypeFromText(const std::string& autoware_type)
 {
-	if(autoware_type.compare("STOP_LINE_MARK"))
+	if(autoware_type.compare("STOP_LINE_MARK") == 0)
 	{
 		return STOP_LINE_MARK;
 	}
-	else if(autoware_type.compare("WAITING_LINE_MARK"))
+	else if(autoware_type.compare("WAITING_LINE_MARK") == 0)
 	{
 		return WAITING_LINE_MARK;
 	}
-	else if(autoware_type.compare("FORWARD_DIRECTION_MARK"))
+	else if(autoware_type.compare("FORWARD_DIRECTION_MARK") == 0)
 	{
 		return FORWARD_DIRECTION_MARK;
 	}
-	else if(autoware_type.compare("LEFT_DIRECTION_MARK"))
+	else if(autoware_type.compare("LEFT_DIRECTION_MARK") == 0)
 	{
 		return LEFT_DIRECTION_MARK;
 	}
-	else if(autoware_type.compare("RIGHT_DIRECTION_MARK"))
+	else if(autoware_type.compare("RIGHT_DIRECTION_MARK") == 0)
 	{
 		return RIGHT_DIRECTION_MARK;
 	}
-	else if(autoware_type.compare("FORWARD_LEFT_DIRECTION_MARK"))
+	else if(autoware_type.compare("FORWARD_LEFT_DIRECTION_MARK") == 0)
 	{
 		return FORWARD_LEFT_DIRECTION_MARK;
 	}
-	else if(autoware_type.compare("FORWARD_RIGHT_DIRECTION_MARK"))
+	else if(autoware_type.compare("FORWARD_RIGHT_DIRECTION_MARK") == 0)
 	{
 		return FORWARD_RIGHT_DIRECTION_MARK;
 	}
-	else if(autoware_type.compare("ALL_DIRECTION_MARK"))
+	else if(autoware_type.compare("ALL_DIRECTION_MARK") == 0)
 	{
 		return ALL_DIRECTION_MARK;
 	}
-	else if(autoware_type.compare("U_TURN_DIRECTION_MARK"))
+	else if(autoware_type.compare("U_TURN_DIRECTION_MARK") == 0)
 	{
 		return U_TURN_DIRECTION_MARK;
 	}
-	else if(autoware_type.compare("NO_U_TURN_DIRECTION_MARK"))
+	else if(autoware_type.compare("NO_U_TURN_DIRECTION_MARK") == 0)
 	{
 		return NO_U_TURN_DIRECTION_MARK;
 	}
@@ -1111,7 +1114,9 @@ void OpenDriveRoad::getTrafficLights(std::vector<PlannerHNS::TrafficLight>& all_
 {
 	for(unsigned int i=0; i<road_signals_.size(); i++)
 	{
-		if(getAutowareMainTypeFromCode(road_signals_.at(i).country_code_, road_signals_.at(i).type_, road_signals_.at(i).sub_type_) == TRAFFIC_LIGHT)
+		OBJECT_TYPE signal_object_type = getAutowareMainTypeFromCode(road_signals_.at(i).country_code_, road_signals_.at(i).type_, road_signals_.at(i).sub_type_);
+
+		if(signal_object_type == TRAFFIC_LIGHT)
 		{
 			PlannerHNS::TrafficLight tl;
 			tl.id = (this->id_*1000000) + road_signals_.at(i).id_ * 10;

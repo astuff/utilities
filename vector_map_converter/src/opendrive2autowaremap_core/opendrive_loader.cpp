@@ -64,7 +64,7 @@ void OpenDriveLoader::loadCountryCods(const std::string& codes_csv_folder)
 		for(unsigned int i=0; i < files_names.size();i++)
 		{
 			CSV_Reader reader(files_names.at(i));
-			int i_ext_dot = files_names.at(i).find('.');
+			int i_ext_dot = files_names.at(i).find_last_of(".csv") - 3;
 			int i_last_folder = files_names.at(i).find_last_of('/')+1;
 			std::string country_code = files_names.at(i).substr(i_last_folder, i_ext_dot - i_last_folder);
 
@@ -85,7 +85,7 @@ void OpenDriveLoader::loadCountryCods(const std::string& codes_csv_folder)
 void OpenDriveLoader::loadOpenDRIVE(const std::string& xodr_file, const std::string& codes_folder, PlannerHNS::RoadNetwork& map, double resolution, bool keep_right)
 {
 	keep_right_ = keep_right;
-	
+
 	std::ifstream f(xodr_file.c_str());
 	if(!f.good())
 	{
@@ -146,7 +146,7 @@ void OpenDriveLoader::loadOpenDRIVE(const std::string& xodr_file, const std::str
 
 	//Connect Roads
 	connectRoads();
-	
+
 	// for(unsigned int i=0; i < roads_list_.size(); i++)
 	// {
 	// 	std::cout << "Road ID: " << roads_list_.at(i).id_ << std::endl;
@@ -160,10 +160,10 @@ void OpenDriveLoader::loadOpenDRIVE(const std::string& xodr_file, const std::str
 	// 		}
 	// 		std::cout << ")";
 	// 	}
-	// 
+	//
 	// 	std::cout << std::endl;
 	// 	std::cout << "To : " ;
-	// 
+	//
 	// 	for(unsigned int j=0; j < roads_list_.at(i).to_roads_.size(); j++)
 	// 	{
 	// 		std::cout << "("  << roads_list_.at(i).to_roads_.at(j).outgoing_road_ <<"|";
@@ -173,7 +173,7 @@ void OpenDriveLoader::loadOpenDRIVE(const std::string& xodr_file, const std::str
 	// 		}
 	// 		std::cout << ")";
 	// 	}
-	// 
+	//
 	// 	std::cout << std::endl <<std::endl;
 	// }
 
@@ -278,7 +278,7 @@ void OpenDriveLoader::connectRoads()
 						}
 						if(pre_conn_list.at(k).outgoing_road_ == roads_list_.at(i).id_)
 						{
-							roads_list_.at(i).insertUniqueFromConnection(pre_conn_list.at(k));							
+							roads_list_.at(i).insertUniqueFromConnection(pre_conn_list.at(k));
 						}
 						else if (pre_conn_list.at(k).incoming_road_ == roads_list_.at(i).id_)
 						{
@@ -306,7 +306,7 @@ void OpenDriveLoader::connectRoads()
 						}
 						if(suc_conn_list.at(k).outgoing_road_ == roads_list_.at(i).id_)
 						{
-							roads_list_.at(i).insertUniqueFromConnection(suc_conn_list.at(k));							
+							roads_list_.at(i).insertUniqueFromConnection(suc_conn_list.at(k));
 						}
 						else if (suc_conn_list.at(k).incoming_road_ == roads_list_.at(i).id_)
 						{
@@ -333,14 +333,14 @@ void OpenDriveLoader::connectRoads()
 					{
 						OpenDriveRoad* incoming_road = getRoadById(junction_connection.outgoing_road_);
 						if( incoming_road == nullptr) continue;
-	
+
 						RoadSection *outgoing_section = roads_list_.at(i).getLastSection();
 						RoadSection *incoming_section = nullptr;
 						if(junction_connection.contact_point_ == "end")
 							incoming_section = incoming_road->getLastSection();
 						else
 							incoming_section = incoming_road->getFirstSection();
-	
+
 						Connection connection;
 						connection.incoming_road_ = junction_connection.outgoing_road_;
 						connection.outgoing_road_ = roads_list_.at(i).id_;
@@ -349,25 +349,25 @@ void OpenDriveLoader::connectRoads()
 						if(outgoing_section != nullptr)
 							connection.outgoing_section_ = roads_list_.at(i).getLastSection()->id_;
 						connection.lane_links = junction_connection.lane_links;
-	
+
 						if( !connection.lane_links.empty() )
 						{
 							//flip appropriate lane depending on keep_right flag
 							if( (keep_right_ && connection.lane_links.at(0).first > 0 ) || (!keep_right_ && connection.lane_links.at(0).first < 0))
 							{
-								connection.flipRoad();							
-								roads_list_.at(i).insertUniqueToConnection(connection);															
-							} 
+								connection.flipRoad();
+								roads_list_.at(i).insertUniqueToConnection(connection);
+							}
 							else
 							{
-								roads_list_.at(i).insertUniqueFromConnection(connection);							
+								roads_list_.at(i).insertUniqueFromConnection(connection);
 							}
 						}
 					}
 				}
 			}
 		}
-	
+
 		if(roads_list_.at(i).successor_road_.size() > 0)
 		{
 			//connect normal roads , junctions will be handeled alone
@@ -380,7 +380,7 @@ void OpenDriveLoader::connectRoads()
 					{
 						OpenDriveRoad* outgoing_road = getRoadById(junction_connection.outgoing_road_);
 						if( outgoing_road == nullptr) continue;
-	
+
 						RoadSection *incoming_section = roads_list_.at(i).getLastSection();
 						RoadSection *outgoing_section = nullptr;
 						if(junction_connection.contact_point_ == "end")
@@ -388,25 +388,25 @@ void OpenDriveLoader::connectRoads()
 						else
 							outgoing_section = outgoing_road->getFirstSection();
 						if(incoming_section == nullptr || outgoing_section == nullptr) continue;
-	
+
 						Connection connection;
 						connection.incoming_road_ = roads_list_.at(i).id_;
 						connection.outgoing_road_ = junction_connection.outgoing_road_;
 						connection.incoming_section_ = incoming_section->id_;
 						connection.outgoing_section_ = outgoing_section->id_;
 						connection.lane_links = junction_connection.lane_links;
-	
+
 						//flip appropriate lane depending on keep_right flag
 						if( !connection.lane_links.empty() )
 						{
 							if( (keep_right_ && connection.lane_links.at(0).first > 0) || (!keep_right_ && connection.lane_links.at(0).first < 0) )
 							{
 								connection.flipRoad();
-								roads_list_.at(i).insertUniqueFromConnection(connection);															
+								roads_list_.at(i).insertUniqueFromConnection(connection);
 							}
 							else
 							{
-								roads_list_.at(i).insertUniqueToConnection(connection);							
+								roads_list_.at(i).insertUniqueToConnection(connection);
 							}
 						}
 					}
@@ -425,7 +425,7 @@ void OpenDriveLoader::connectRoads()
 	// 		{
 	// 			p_from_road->insertUniqueToConnection(junctions_list_.at(i).connections_.at(j));
 	// 		}
-	// 
+	//
 	// 		OpenDriveRoad* p_to_road = getRoadById(junctions_list_.at(i).connections_.at(j).outgoing_road_);
 	// 		if(p_to_road != nullptr)
 	// 		{
@@ -433,7 +433,7 @@ void OpenDriveLoader::connectRoads()
 	// 		}
 	// 	}
 	// }
-	// 
+	//
 	// //Link Missing successors that are linked to junctions
 	// for(unsigned int i=0; i < roads_list_.size(); i++)
 	// {
@@ -470,6 +470,7 @@ void OpenDriveLoader::getTrafficLights(std::vector<PlannerHNS::TrafficLight>& al
 	for(unsigned int i=0; i < roads_list_.size(); i++)
 	{
 		roads_list_.at(i).getTrafficLights(all_lights);
+		// std::cout << "All lights num: " << all_lights.size() << std::endl;
 	}
 }
 
