@@ -7,3 +7,11 @@ repositories:
     type: git
     url: https://gitlab.com/astuff/autoware.ai/messages.git
     version: as/master
+  lanelet2:
+    type: git
+    url: https://github.com/fzi-forschungszentrum-informatik/Lanelet2
+    version: master
+  mrt_cmake_modules:
+    type: git
+    url: https://github.com/KIT-MRT/mrt_cmake_modules
+    version: master
