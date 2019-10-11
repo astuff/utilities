@@ -564,6 +564,21 @@ subs :
          desc : waypoint_clicker desc sample
          cmd  : rosrun waypoint_maker waypoint_clicker
          param: waypoint_clicker
+       - name : waypoint_creator
+         desc : create waypoints from some source points
+         cmd  : roslaunch waypoint_maker waypoint_creator.launch
+         gui  :
+           interpolation_method    :
+             flags       : [ nl ]
+           source_point_topic    :
+             flags       : [ nl ]
+           delete_pose_topic    :
+             flags       : [ nl ]
+           interpolation_interval    :
+             flags       : [ nl ]
+           waypoint_velocity    :
+             flags       : [ nl ]
+         param: waypoint_creator
        - name : waypoint_velocity_visualizer
          desc : waypoint_velocity_visualizer desc sample
          cmd  : roslaunch waypoint_maker waypoint_velocity_visualizer.launch
@@ -591,7 +606,7 @@ subs :
       subs :
        - name : pure_pursuit
          desc : pure_pursuit desc sample
-         cmd  : roslaunch waypoint_follower pure_pursuit.launch
+         cmd  : roslaunch pure_pursuit pure_pursuit.launch
          param: waypoint_follower
          gui  :
            dialog_width  : 600
@@ -611,11 +626,11 @@ subs :
            stat_topic : [ lf ]
        - name : mpc_follower
          desc : model predictive control based path following
-         cmd  : roslaunch waypoint_follower mpc_follower.launch
+         cmd  : roslaunch mpc_follower mpc_follower.launch
          param: mpc_follower
          gui  :
            dialog_width  : 600
-           dialog_height : 900
+           dialog_height : 750
            show_debug_info :
              flags : [ nl ]
            qp_solver_type :
@@ -628,20 +643,79 @@ subs :
              depend_bool : 'lambda v : v == True'
        - name : twist_filter
          desc : twist_filter desc sample
-         cmd  : roslaunch waypoint_follower twist_filter.launch
+         cmd  : roslaunch twist_filter twist_filter.launch
          param: twist_filter
        - name : wf_simulator
-         desc : wf_simulator desc sample
-         cmd  : roslaunch waypoint_follower wf_simulator.launch
+         desc : waypoint follower simulator
+         cmd  : roslaunch wf_simulator wf_simulator.launch
          param: wf_simulator
          gui  :
+           dialog_width  : 500
+           dialog_height : 600
+           sim_pose_name :
+             flags : [ nl ]
+           sim_velocity_name :
+             flags : [ nl ]
            initialize_source :
              flags : [ nl ]
+           add_measurement_noise :
+             flags : [ nl ]
+           use_waypoints_for_z_position_source :
+             flags : [ nl ]
+           vehicle_model_type :
+             flags : [ nl ]
+           simulation_frame_id :
+             flags : [ nl ]
+           lidar_frame_id :
+             flags : [ nl ]
+           vel_lim :
+             flags : [ nl ]
+             depend : vehicle_model_type
+             depend_bool : 'lambda v : v == "DELAY_TWIST" or v == "DELAY_STEER" or v == "CONST_ACCEL_TWIST"'
+           angvel_lim :
+             flags : [ nl ]
+             depend : vehicle_model_type
+             depend_bool : 'lambda v : v == "DELAY_TWIST" or v == "CONST_ACCEL_TWIST"'
            accel_rate :
              flags : [ nl ]
-           position_error :
+             depend : vehicle_model_type
+             depend_bool : 'lambda v : v == "DELAY_TWIST" or v == "CONST_ACCEL_TWIST"'
+           angvel_rate :
              flags : [ nl ]
-
+             depend : vehicle_model_type
+             depend_bool : 'lambda v : v == "DELAY_TWIST" or v == "CONST_ACCEL_TWIST"'
+           vel_time_delay :
+             flags : [ nl ]
+             depend : vehicle_model_type
+             depend_bool : 'lambda v : v == "DELAY_TWIST" or v == "DELAY_STEER"'
+           vel_time_constant :
+             flags : [ nl ]
+             depend : vehicle_model_type
+             depend_bool : 'lambda v : v == "DELAY_TWIST" or v == "DELAY_STEER"'
+           angvel_time_delay :
+             flags : [ nl ]
+             depend : vehicle_model_type
+             depend_bool : 'lambda v : v == "DELAY_TWIST"'
+           angvel_time_constant :
+             flags : [ nl ]
+             depend : vehicle_model_type
+             depend_bool : 'lambda v : v == "DELAY_TWIST"'
+           steer_lim :
+             flags : [ nl ]
+             depend : vehicle_model_type
+             depend_bool : 'lambda v : v == "DELAY_STEER"'
+           steer_rate_lim :
+             flags : [ nl ]
+             depend : vehicle_model_type
+             depend_bool : 'lambda v : v == "DELAY_STEER"'
+           steer_time_delay :
+             flags : [ nl ]
+             depend : vehicle_model_type
+             depend_bool : 'lambda v : v == "DELAY_STEER"'
+           steer_time_constant :
+             flags : [ nl ]
+             depend : vehicle_model_type
+             depend_bool : 'lambda v : v == "DELAY_STEER"'
     - name : OpenPlanner - Local planning
       desc : Local Planner for OpenPlanner
       subs :
@@ -1646,6 +1720,14 @@ params :
       cmd_param :
         dash        : ''
         delim       : ':='
+    - name    : add_virtual_end_waypoints
+      desc    : add virtual end waypoints to reach end waypoint
+      label   : 'Add virtual end waypoints'
+      kind    : checkbox
+      v       : False
+      cmd_param :
+        dash        : ''
+        delim       : ':='
 
   - name  : mpc_follower
     vars  :
@@ -1683,9 +1765,11 @@ params :
       choices:
       - unconstraint
       - unconstraint_fast
+      - qpoases_hotstart
       descs :
       - unconstraint least square 
       - unconstraint least square (fast, but low accuracy)
+      - constraint with qpOASES hotstart
       choices_type : str
       v       : unconstraint_fast
       cmd_param :
@@ -1870,8 +1954,6 @@ params :
     - name  : vehicle_model_wheelbase
       desc  : vehicle_model_wheelbase
       label : wheelbase [m]
-      min   : 0.1
-      max   : 10.0
       v     : 2.9
       cmd_param :
         dash        : ''
@@ -1879,9 +1961,14 @@ params :
     - name  : steer_lim_deg
       desc  : steer_lim_deg
       label : steering angle limit [deg]
-      min   : 10.0
-      max   : 45.0
       v     : 35.0
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name  : qpoases_max_iter
+      desc  : max iteration number for qpoases convex optimization
+      label : qpoases_max_iter
+      v     : 500
       cmd_param :
         dash        : ''
         delim       : ':='
@@ -2179,46 +2266,175 @@ params :
       min   : 0
       max   : 1.0
       v         : 0.0
+    - name  : use_decision_maker
+      desc  : If you use decision_maker, please check this true.
+      label : use_decision_maker
+      kind  : checkbox
+      v     : False
+      cmd_param :
+        dash        : ''
+        delim       : ':='
 
   - name  : wf_simulator
     vars  :
     - name    : initialize_source
-      desc    : initialize_source desc sample
+      desc    : initial pose source for wf_simulation
       label   : Initialize Source
       kind    : radio_box
-      choices : ['Rviz','lidar_localizer','GNSS']
-      descs   : ['Rviz desc sample', 'lidar_localizer desc sample', 'GNSS desc sample']
+      choices : ['RVIZ','NDT','GNSS', 'ORIGIN']
+      descs   : ['use initialpose from 2D pose estimate in Rviz plugin  as an initial pose source', 'use ndt_pose as an initial pose source', 'use gnss_pose as an initial pose source', 'set initial pose at origin']
+      choices_style: h
       choices_type : str
       v       : Rviz
       cmd_param:
         dash     : ''
         delim    : ':='
+    - name    : add_measurement_noise
+      desc    : add measurement noise for output topics
+      label   : 'add_measurement_noise'
+      kind    : checkbox
+      v       : False
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name    : use_waypoints_for_z_position_source
+      desc    : subscribe waypoints and closest index for z position source
+      label   : 'use_waypoints_for_z_position_source'
+      kind    : checkbox
+      v       : False
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name    : vehicle_model_type
+      desc    : vehicle model type for simulation dynamics
+      label   : 'vehicle_model_type Source :'
+      kind    : menu
+      choices : ['IDEAL_TWIST', 'CONST_ACCEL_TWIST', 'DELAY_TWIST','IDEAL_STEER', 'DELAY_STEER']
+      descs   : ['ideal twist model', 'twist model with acceleration limit', 'twist model with dead time & response delay', 'ideal steering model', 'steering model with dead time & response delay']
+      choices_type : str
+      v       : 'IDEAL_TWIST'
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name    : simulation_frame_id
+      desc    : simulation_frame_id
+      label   : 'tf simulation_frame_id :'
+      kind    : menu
+      choices : ['base_link', 'sim_base_link']
+      descs   : ['', '']
+      choices_type : str
+      v       : 'base_link'
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name    : lidar_frame_id
+      desc    : lidar_frame_id
+      label   : 'tf lidar_frame_id :'
+      kind    : menu
+      choices : ['velodyne', 'sim_lidar']
+      descs   : ['', '']
+      choices_type : str
+      v       : 'velodyne'
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name    : sim_pose_name
+      desc    : output pose topic
+      label   : 'output pose topic :'
+      kind    : str
+      v       : 'current_pose'
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name    : sim_velocity_name
+      desc    : output velocity topic
+      label   : 'output velocity topic  :'
+      kind    : str
+      v       : 'current_velocity'
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name      : vel_lim
+      desc      :
+      label   : ' velocity limit [m/s] :'
+      v         : 30.0
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name      : angvel_lim
+      desc      :
+      label   : ' angular velocity limit [rad/s] :'
+      v         : 3.0
+      cmd_param :
+        dash        : ''
+        delim       : ':='
     - name      : accel_rate
       desc      :
-      label   : 'accel_rate(m/s^2) :'
+      label   : ' acceleration limit [m/ss] :'
       v         : 1.0
       cmd_param :
         dash        : ''
         delim       : ':='
-    - name      : position_error
+    - name      : angvel_rate
       desc      :
-      label   : 'position_error(m) :'
-      v         : 0.0
+      label   : ' angular acceleration limit [rad/ss] :'
+      v         : 1.0
       cmd_param :
         dash        : ''
         delim       : ':='
-    - name      : angle_error
+    - name      : vel_time_delay
       desc      :
-      label   : 'angle_error(degree) :'
-      v         : 0.0
+      label   : ' velocity time delay [s] :'
+      v         : 0.250
       cmd_param :
         dash        : ''
         delim       : ':='
-    - name      : use_ctrl_cmd
+    - name      : vel_time_constant
       desc      :
-      label   : 'use_ctrl_cmd :'
-      kind    : checkbox
-      v       : False
+      label   : ' velocity time constant [s] :'
+      v         : 0.600
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name      : angvel_time_delay
+      desc      :
+      label   : ' angular velocity time delay [s] :'
+      v         : 0.200
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name      : angvel_time_constant
+      desc      :
+      label   : ' angular velocity time constant [s] :'
+      v         : 0.400
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name      : steer_lim
+      desc      :
+      label   : ' steering angle limit [rad] :'
+      v         : 1.0
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name      : steer_rate_lim
+      desc      :
+      label   : ' steering angular velocity limit [rad/s] :'
+      v         : 0.5
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name      : steer_time_delay
+      desc      :
+      label   : ' steering time delay [s] :'
+      v         : 0.240
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name      : steer_time_constant
+      desc      :
+      label   : ' steering time constant [s] :'
+      v         : 0.27
       cmd_param :
         dash        : ''
         delim       : ':='
@@ -2230,6 +2446,14 @@ params :
     - name  : disuse_vector_map
       desc  : If this is enabled, the state passes through the MapInit state without vectormap.
       label : disuse_vector_map
+      kind  : checkbox
+      v     : False
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name  : sim_mode
+      desc  : If you use simulator(e.g. wf_sim) please check this true.
+      label : sim_mode
       kind  : checkbox
       v     : False
       cmd_param :
@@ -3867,7 +4091,43 @@ params :
       path_type : save
       v         : /tmp/lane_waypoint.csv
       rosparam  : /waypoint_clicker/output_file
-
+  - name  : waypoint_creator
+    vars  :
+    - name    : interpolation_method
+      desc    : interpolation_method
+      label   : interpolation_method
+      kind    : radio_box
+      choices : ['linear','spline']
+      descs   : ['linear interpolation for input points','spline interpolation for input points']
+      choices_type : str
+      v       : spline
+      cmd_param:
+        dash     : ''
+        delim    : ':='
+    - name    : source_point_topic
+      desc    : source points topic name to generate waypoints
+      label   : 'source point topic'
+      kind    : str
+      v       : /clicked_point
+      cmd_param :
+        dash  : ''
+        delim : ':='
+    - name    : delete_pose_topic
+      desc    : pose topic name to delete source point
+      label   : 'delete pose topic'
+      kind    : str
+      v       : /move_base_simple/goal
+      cmd_param :
+        dash  : ''
+        delim : ':='
+    - name      : interpolation_interval
+      desc      : interval length for waypoints interpolation
+      label     : interpolation_interval [m]
+      v         : 1.0
+    - name      : waypoint_velocity
+      desc      : waypoint_velocity
+      label     : waypoint_velocity
+      v         : 5.0
   - name  : waypoint_loader
     topic : /config/waypoint_replanner
     msg   : ConfigWaypointReplanner
@@ -4022,6 +4282,14 @@ params :
       min       : 0
       max       : 2
       v         : 1
+      cmd_param :
+        dash        : ''
+        delim       : ':='
+    - name  : use_decision_maker
+      desc  : If you use decision_maker, please check this true.
+      label : use_decision_maker
+      kind  : checkbox
+      v     : False
       cmd_param :
         dash        : ''
         delim       : ':='
@@ -6068,6 +6336,14 @@ params :
       label     : enable_adaptive_estimate
       kind      : checkbox
       v         : true
+      cmd_param :
+        dash      : ''
+        delim     : ':='
+    - name      : enable_steering_offset_estimate
+      desc      : enable steering offset estimation with /estimate_twist by recursive least square method
+      label     : enable_steering_offset_estimate
+      kind      : checkbox
+      v         : false
       cmd_param :
         dash      : ''
         delim     : ':='
