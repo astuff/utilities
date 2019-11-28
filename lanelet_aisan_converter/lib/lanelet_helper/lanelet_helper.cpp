@@ -125,6 +125,20 @@ lanelet::LineString3d generateFineCenterline(const lanelet::ConstLanelet& lanele
 
 namespace lanelet_helper
 {
+double angle2azimuth(double angle)
+{
+  if (angle < 0)
+  {
+    angle += 360;
+  }
+
+  double azimuth = 450 - angle;
+  if (azimuth > 360)
+  {
+    return (azimuth - 360);
+  }
+}
+
 std::vector<double> calculateSegmentDistances(const lanelet::ConstLineString3d& line_string)
 {
   std::vector<double> segment_distances;

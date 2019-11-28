@@ -338,8 +338,8 @@ void Lanelet2AisanConverter::createSignals()
 
         // Calculate lane angle
         const auto N = lanelet_obj.centerline().size();
-        const auto p1 = lanelet_obj.centerline()[N - 1];
-        const auto p2 = lanelet_obj.centerline()[N - 2];
+        const auto p2 = lanelet_obj.centerline()[N - 1];
+        const auto p1 = lanelet_obj.centerline()[N - 2];
         const auto lane_angle = atan2(p2.y() - p1.y(), p2.x() - p1.x());
 
         // Create bulb's color and position info
@@ -351,21 +351,24 @@ void Lanelet2AisanConverter::createSignals()
 
         // NOLINTNEXTLINE
         std::vector<BulbInfo> bulb_info_list = {
-          { vector_map_msgs::Signal::RED, 0.25 },
+          { vector_map_msgs::Signal::BLUE, 0.25 },
           { vector_map_msgs::Signal::YELLOW, 0.5 },
-          { vector_map_msgs::Signal::BLUE, 0.75 },
+          { vector_map_msgs::Signal::RED, 0.75 },
         };
 
         // Calculate direction of light's LineString
+        const double housing_size = 1.0;
         lanelet::ConstLineString3d light_bulb_points = traffic_light.lineString().value();
-        const lanelet::BasicPoint3d start_point = light_bulb_points.front();
-        const lanelet::BasicPoint3d end_point = light_bulb_points.back();
+        const lanelet::BasicPoint3d first_bulb = light_bulb_points.front();
+        const lanelet::BasicPoint3d start_point = first_bulb;
+        const lanelet::BasicPoint3d end_point = start_point + lanelet::BasicPoint3d(0, 0, housing_size * 0.8);
         const lanelet::BasicPoint3d direction_vector = end_point - start_point;
 
         // Create Pole
-        const auto pole_height = 5.0;
-        const auto mid_point = (start_point + end_point) / 2;
-        const auto plid = createPole(mid_point, 0, 0, pole_height, 0.3);
+        const auto pole_height = housing_size;
+        const auto pole_bottom = first_bulb - lanelet::BasicPoint3d(0, 0, housing_size * 0.1);
+        // const auto mid_point = (start_point + end_point) / 2;
+        const auto plid = createPole(pole_bottom, 0, 0, pole_height, 0.2);
 
         // Create each light bulb
         for (const auto& bulb_info : bulb_info_list)
@@ -374,8 +377,11 @@ void Lanelet2AisanConverter::createSignals()
           const lanelet::BasicPoint3d p_bottom = start_point + bulb_info.pos * direction_vector;
           const lanelet::BasicPoint3d p(p_bottom.x(), p_bottom.y(), p_bottom.z() + pole_height);
 
-          // Create vector
-          const auto vid = createVector(p, amathutils::rad2deg(-lane_angle), 90);
+          // Aisan angles start at 12 o'clock and increase in value going clockwise
+          float bulb_angle = amathutils::rad2deg(lane_angle) + 180;
+          bulb_angle = lanelet_helper::angle2azimuth(bulb_angle);
+          ROS_INFO("BA: %f", bulb_angle);
+          const auto vid = createVector(p, bulb_angle, 90);
 
           // Create Feature
           vector_map_msgs::Signal signal{};

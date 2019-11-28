@@ -33,6 +33,10 @@
 
 namespace lanelet_helper
 {
+
+double angle2azimuth(double angle);
+
+
 /**
  * @brief Calculate distances of each segment in LineString
  * @return std::vector<double> Distances of each segment
