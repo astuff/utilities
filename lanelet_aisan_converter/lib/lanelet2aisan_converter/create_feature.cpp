@@ -403,7 +403,7 @@ void Lanelet2AisanConverter::createStopLines()
 {
   for (const auto& line_string : lanelet_map_->lineStringLayer)
   {
-    if (line_string.attributeOr(lanelet::AttributeName::Type, "") != "stop_line")
+    if (line_string.attributeOr(lanelet::AttributeName::Type, std::string()) != "stop_line")
     {
       continue;
     }
