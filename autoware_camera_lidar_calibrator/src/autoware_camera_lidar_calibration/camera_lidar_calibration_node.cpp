@@ -194,14 +194,14 @@ class ROSCameraLidarApp
 		                         in_clicked_point.point.z) << std::endl << std::endl;
 		CalibrateSensors();
 	}
-	void ImageClickedPointCallback(const geometry_msgs::PointStamped& in_clicked_point)
+	void ImageClickedPointCallback(const geometry_msgs::Point& in_clicked_point)
 	{
 
-		clicked_image_points_.push_back(cv::Point2f(in_clicked_point.point.x,
-		                                               in_clicked_point.point.y));
+		clicked_image_points_.push_back(cv::Point2f(in_clicked_point.x,
+		                                               in_clicked_point.y));
 
-		std::cout << cv::Point2f(in_clicked_point.point.x,
-		                         in_clicked_point.point.y) << std::endl << std::endl;
+		std::cout << cv::Point2f(in_clicked_point.x,
+		                         in_clicked_point.y) << std::endl << std::endl;
 
 		CalibrateSensors();
 	}
