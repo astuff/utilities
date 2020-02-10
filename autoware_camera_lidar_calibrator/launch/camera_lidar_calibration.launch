@@ -1,6 +1,3 @@
-<!--
-roslaunch autoware_camera_lidar_calibrator camera_lidar_calibration.launch intrinsics_file:=/home/ne0/Desktop/calib_heat_camera1_rear_center_fisheye.yaml compressed_stream:=True camera_id:=camera1
--->
 <launch>
     <arg name="image_src" default="/image_raw" />
     <arg name="camera_info_src" default="/camera_info" />
@@ -9,6 +6,7 @@ roslaunch autoware_camera_lidar_calibrator camera_lidar_calibration.launch intri
     <arg name="compressed_stream" default="false" />
     <arg name="target_frame" default="velodyne"/>
     <arg name="camera_frame" default="camera"/>
+    <arg name="use_rqt_image_view" default="false" />
 
     <node if="$(arg compressed_stream)" name="decompress" type="republish" pkg="image_transport" output="screen" args="compressed in:=/$(arg camera_id)/$(arg image_src) raw out:=/$(arg camera_id)/$(arg image_src)" />
 
@@ -27,13 +25,18 @@ roslaunch autoware_camera_lidar_calibrator camera_lidar_calibration.launch intri
         <param name="camera_info_src" value="$(arg camera_info_src)" />
     </node>
 
-    <node pkg="image_view2" type="image_view2" name="image_view2" ns="$(arg camera_id)" output="screen">
-        <remap from="image" to="image_rectified" />
-    </node>
+    <!-- JSK image_view2, unable to shrink image size -->
+    <!-- Remap camera_info because the unrectified image points should be used for calibration. -->
+    <node unless="$(arg use_rqt_image_view)" pkg="image_view2" type="image_view2"
+        name="image_view2" ns="$(arg camera_id)" output="screen" args="/image:=$(arg image_src) camera_info:=camera_info_unused"/>
+
+    <!-- RQT image_view, able to shrink size of image if camera resolution is large -->
+    <node if="$(arg use_rqt_image_view)" pkg="rqt_image_view" type="rqt_image_view"
+        name="rqt_image_view" ns="$(arg camera_id)" output="screen" args="$(arg image_src)" />
 
     <node pkg="autoware_camera_lidar_calibrator" type="autoware_camera_lidar_calibration_node" name="autoware_camera_lidar_calibration_node" ns="$(arg camera_id)" output="screen">
-        <param name="image_src" value="/image_rectified" />
+        <param name="image_src" value="$(arg image_src)" />
         <param name="camera_info_src" value="$(arg camera_info_src)" />
+        <param name="use_rqt_image_view" value="$(arg use_rqt_image_view)" />
     </node>
-
 </launch>
