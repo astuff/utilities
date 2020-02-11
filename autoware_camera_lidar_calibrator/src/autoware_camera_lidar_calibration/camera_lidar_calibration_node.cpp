@@ -47,6 +47,7 @@ class ROSCameraLidarApp
 	ros::Subscriber 	subscriber_points_raw_;
 	ros::Subscriber     subscriber_intrinsics_;
 	ros::Subscriber     subscriber_clicked_point_;
+	ros::Subscriber     subscriber_image_point_stamped_;
 	ros::Subscriber     subscriber_image_point_;
 
 	cv::Size            image_size_;
@@ -194,14 +195,20 @@ class ROSCameraLidarApp
 		                         in_clicked_point.point.z) << std::endl << std::endl;
 		CalibrateSensors();
 	}
-	void ImageClickedPointCallback(const geometry_msgs::PointStamped& in_clicked_point)
+
+	void ImageClickedPointStampedCallback(const geometry_msgs::PointStamped& in_clicked_point)
+	{
+		ImageClickedPointCallback(in_clicked_point.point);
+	}
+
+	void ImageClickedPointCallback(const geometry_msgs::Point& in_clicked_point)
 	{
 
-		clicked_image_points_.push_back(cv::Point2f(in_clicked_point.point.x,
-		                                               in_clicked_point.point.y));
+		clicked_image_points_.push_back(cv::Point2f(in_clicked_point.x,
+		                                               in_clicked_point.y));
 
-		std::cout << cv::Point2f(in_clicked_point.point.x,
-		                         in_clicked_point.point.y) << std::endl << std::endl;
+		std::cout << cv::Point2f(in_clicked_point.x,
+		                         in_clicked_point.y) << std::endl << std::endl;
 
 		CalibrateSensors();
 	}
@@ -247,10 +254,12 @@ public:
 		ros::NodeHandle private_node_handle("~");//to receive args
 
 		std::string image_raw_topic_str, points_raw_topic_str, clusters_topic_str, camera_info_topic_str;
+		bool use_rqt_image_view;
 		std::string name_space_str = ros::this_node::getNamespace();
 
 		private_node_handle.param<std::string>("image_src", image_raw_topic_str, "/image_rectified");
 		private_node_handle.param<std::string>("camera_info_src", camera_info_topic_str, "camera_info");
+		private_node_handle.param<bool>("use_rqt_image_view", use_rqt_image_view, false);
 
 		if (name_space_str != "/")
 		{
@@ -265,10 +274,8 @@ public:
 		ROS_INFO("[%s] image_src: %s",__APP_NAME__, image_raw_topic_str.c_str());
 		ROS_INFO("[%s] camera_info_src: %s",__APP_NAME__, camera_info_topic_str.c_str());
 
-
 		ROS_INFO("[%s] Subscribing to... %s",__APP_NAME__, image_raw_topic_str.c_str());
 		subscriber_image_raw_ = node_handle_.subscribe(image_raw_topic_str, 1, &ROSCameraLidarApp::ImageCallback, this);
-
 
 		ROS_INFO("[%s] Subscribing to... %s",__APP_NAME__, camera_info_topic_str.c_str());
 		subscriber_intrinsics_ = node_handle_.subscribe(camera_info_topic_str, 1, &ROSCameraLidarApp::IntrinsicsCallback, this);
@@ -276,9 +283,18 @@ public:
 		ROS_INFO("[%s] Subscribing to PointCloud ClickedPoint from RVIZ... /clicked_point",__APP_NAME__);
 		subscriber_clicked_point_ = node_handle_.subscribe("/clicked_point", 1, &ROSCameraLidarApp::RvizClickedPointCallback, this);
 
-		ROS_INFO("[%s] Subscribing to Image ClickedPoint from JSK ImageView2... %s/screenpoint",__APP_NAME__, image_raw_topic_str.c_str());
-		subscriber_image_point_ = node_handle_.subscribe(image_raw_topic_str+"/screenpoint", 1, &ROSCameraLidarApp::ImageClickedPointCallback, this);
-		ROS_INFO("[%s] ClickedPoint: %s",__APP_NAME__, (image_raw_topic_str+"/screenpoint").c_str());
+		if (!use_rqt_image_view)
+		{
+			ROS_INFO("[%s] Subscribing to Image ClickedPoint from JSK ImageView2... %s/screenpoint",__APP_NAME__, image_raw_topic_str.c_str());
+			subscriber_image_point_stamped_ = node_handle_.subscribe(image_raw_topic_str+"/screenpoint", 1, &ROSCameraLidarApp::ImageClickedPointStampedCallback, this);
+			ROS_INFO("[%s] ClickedPoint: %s",__APP_NAME__, (image_raw_topic_str+"/screenpoint").c_str());
+		}
+		else
+		{
+			ROS_INFO("[%s] Subscribing to Image ClickedPoint from RQT Image View... %s_mouse_left",__APP_NAME__, image_raw_topic_str.c_str());
+			subscriber_image_point_ = node_handle_.subscribe(image_raw_topic_str+"_mouse_left", 1, &ROSCameraLidarApp::ImageClickedPointCallback, this);
+			ROS_INFO("[%s] ClickedPoint: %s",__APP_NAME__, (image_raw_topic_str+"_mouse_left").c_str());
+		}
 
 		ROS_INFO("[%s] Ready. Waiting for data...",__APP_NAME__);
 		ros::spin();
