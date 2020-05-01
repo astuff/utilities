@@ -5,26 +5,30 @@ find_package(autoware_build_flags REQUIRED)
 
 find_package(autoware_msgs REQUIRED)
 find_package(catkin REQUIRED COMPONENTS
-        roscpp
-        std_msgs
-        sensor_msgs
-        cv_bridge
-        image_transport
         autoware_msgs
-        tf
-        )
+        cv_bridge
+        geometry_msgs
+        image_transport
+        roscpp
+        sensor_msgs
+        std_msgs
+        tf2
+        tf2_geometry_msgs
+        tf2_ros
+)
 
 find_package(OpenCV REQUIRED)
 
-catkin_package(
-        CATKIN_DEPENDS
-        roscpp
-        std_msgs
-        sensor_msgs
+catkin_package(CATKIN_DEPENDS
+        autoware_msgs
         cv_bridge
         image_transport
-        autoware_msgs
-        tf
+        roscpp
+        sensor_msgs
+        std_msgs
+        tf2
+        tf2_geometry_msgs
+        tf2_ros
 )
 
 include_directories(
