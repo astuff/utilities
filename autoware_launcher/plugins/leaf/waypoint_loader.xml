@@ -2,7 +2,6 @@
 
 	<arg name="load_csv"             default="true"/>
 	<arg name="multi_lane_csv"       default=""/>
-
 	<arg name="replanning_mode"      default="false"/>
 	<arg name="velocity_max"         default="20"/>
 	<arg name="velocity_min"         default="4"/>
@@ -20,6 +19,7 @@
 		<arg name="load_csv"       value="$(arg load_csv)"/>
 		<arg name="multi_lane_csv" value="$(arg multi_lane_csv)"/>
 	</include>
+
 
 	<node pkg="rostopic" type="rostopic" name="config_waypoint_loader" ns="autoware_launcher"
 		args="pub --latch --once /config/waypoint_replanner autoware_config_msgs/ConfigWaypointReplanner '{
