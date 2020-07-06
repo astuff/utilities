@@ -48,6 +48,7 @@ class ROSCameraLidarApp
   ros::Subscriber     subscriber_intrinsics_;
   ros::Subscriber     subscriber_clicked_point_;
   ros::Subscriber     subscriber_image_point_;
+  ros::Subscriber     subscriber_image_point_stamped_;
 
   cv::Size            image_size_;
   cv::Mat             camera_instrinsics_;
