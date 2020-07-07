@@ -13,12 +13,23 @@ subs :
         param: gnss
         gui  :
           stat_topic : [ gnss ]
+          plane :
+            flags : [ nl ]
+          sim_mode :
+            depend : sim_mode
+            depend_bool : 'lambda v : v == 1'
       - name : nmea2tfpose
         desc : nmea2tfpose desc sample
         cmd  : roslaunch gnss_localizer nmea2tfpose.launch
         param: gnss
         gui  :
           stat_topic : [ gnss ]
+          plane :
+            depend : sim_mode
+            depend_bool : 'lambda v : v == 0'
+            flags : [ nl ]
+          sim_mode :
+            flags : [ nl ]
     - name : lidar_localizer
       desc : lidar_localizer desc sample
       subs :
@@ -1408,6 +1419,14 @@ params :
       cmd_param :
         dash        : ''
         delim       : ':='
+    - name    : sim_mode
+      desc    : Enable simulation mode - plane origin at (0°, 0°)
+      label   : 'Simulation Mode'
+      kind    : checkbox
+      v       : False
+      cmd_param:
+        dash     : ''
+        delim    : ':='
 
   - name  : ndt
     topic : /config/ndt
@@ -5371,7 +5390,7 @@ params :
       label   : 'clip_min_height (~sensor height)'
       min       : -5
       max       : 5
-      v       : -5
+      v       : -1.3
       cmd_param :
         dash        : ''
         delim       : ':='
@@ -6560,14 +6579,6 @@ params :
       min   : 0.01
       max   : 1.0
       v     : 0.05
-      cmd_param :
-        dash      : ''
-        delim     : ':='
-    - name      : enable_emergency_to_twist_gate
-      desc      : If a difference is detected, enter emergency state via twist_gate node
-      label     : enable_emergency_to_twist_gate
-      kind      : checkbox
-      v         : true
       cmd_param :
         dash      : ''
         delim     : ':='
