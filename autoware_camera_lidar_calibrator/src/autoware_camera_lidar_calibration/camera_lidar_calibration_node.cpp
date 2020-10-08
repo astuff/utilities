@@ -25,6 +25,7 @@
 #include <pcl/PCLPointCloud2.h>
 #include <pcl_ros/point_cloud.h>
 #include <boost/filesystem.hpp>
+#include <tf2/LinearMath/Transform.h>
 
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
@@ -143,41 +144,86 @@ class ROSCameraLidarApp
     if (clicked_velodyne_points_.size() == clicked_image_points_.size()
         && clicked_image_points_.size() > 8)
     {
-      cv::Mat rotation_vector, translation_vector;
-
+      // Solve for transform from lidar to camera
+      cv::Mat r_vector, t_vector;
+      // cv::Mat rotation_vector;
+      // tf2::Vector3 translation_vector;
       cv::solvePnP(clicked_velodyne_points_,
                    clicked_image_points_,
                    camera_instrinsics_,
                    distortion_coefficients_,
-                   rotation_vector,
-                   translation_vector,
-                   true,
+                   r_vector,
+                   t_vector,
+                   false,
                    CV_EPNP
       );
 
-      cv::Mat rotation_matrix;
-      cv::Rodrigues(rotation_vector, rotation_matrix);
+      // Convert to ROS TF
+      // Position of camera in lidar frame
+      // cv::Point3f camera_velodyne_point(translation_vector);
+      tf2::Vector3 lX_camera(
+        t_vector.at<double>(0),
+        t_vector.at<double>(1),
+        t_vector.at<double>(2));
+      // M.at<double>(0,0);
 
-      cv::Mat camera_velodyne_rotation = rotation_matrix.t();
-      cv::Point3f camera_velodyne_point(translation_vector);
-      cv::Point3f camera_velodyne_translation;
+      // Rotation of camera, need to convert from vector to matrix first
+      cv::Mat r_matrix;
+      cv::Rodrigues(r_vector, r_matrix);
+      tf2::Matrix3x3 R_camera(
+          r_matrix.at<double>(0, 0),
+          r_matrix.at<double>(0, 1),
+          r_matrix.at<double>(0, 2),
+          r_matrix.at<double>(1, 0),
+          r_matrix.at<double>(1, 1),
+          r_matrix.at<double>(1, 2),
+          r_matrix.at<double>(2, 0),
+          r_matrix.at<double>(2, 1),
+          r_matrix.at<double>(2, 2));
 
-      camera_velodyne_translation.x = -camera_velodyne_point.z;
-      camera_velodyne_translation.y = camera_velodyne_point.x;
-      camera_velodyne_translation.z = camera_velodyne_point.y;
+      // cv::Mat camera_velodyne_rotation = rotation_matrix.t();
+      // cv::Point3f camera_velodyne_point(translation_vector);
 
-      std::cout << "Rotation:" << camera_velodyne_rotation << std::endl << std::endl;
-      std::cout << "Translation:" << camera_velodyne_translation << std::endl;
-      std::cout << "RPY: " << get_rpy_from_matrix(camera_velodyne_rotation) << std::endl << std::endl;
+      tf2::Transform cTl(R_camera, lX_camera);
+      tf2::Transform lTc = cTl.inverse();
 
+
+      // Convert back to cv matrix
       cv::Mat extrinsics = cv::Mat::eye(4,4, CV_64F);
-      camera_velodyne_rotation.copyTo(extrinsics(cv::Rect_<float>(0,0,3,3)));
 
-      std::cout << extrinsics << std::endl;
+      extrinsics.at<double>(0,3) = lTc.getOrigin()[0];
+      extrinsics.at<double>(1,3) = lTc.getOrigin()[1];
+      extrinsics.at<double>(2,3) = lTc.getOrigin()[2];
 
-      extrinsics.at<double>(0,3) = camera_velodyne_translation.x;
-      extrinsics.at<double>(1,3) = camera_velodyne_translation.y;
-      extrinsics.at<double>(2,3) = camera_velodyne_translation.z;
+      extrinsics.at<double>(0,0) = lTc.getBasis().getColumn(0)[0];
+      extrinsics.at<double>(1,0) = lTc.getBasis().getColumn(0)[1];
+      extrinsics.at<double>(2,0) = lTc.getBasis().getColumn(0)[2];
+
+      extrinsics.at<double>(0,1) = lTc.getBasis().getColumn(1)[0];
+      extrinsics.at<double>(1,1) = lTc.getBasis().getColumn(1)[1];
+      extrinsics.at<double>(2,1) = lTc.getBasis().getColumn(1)[2];
+
+      extrinsics.at<double>(0,2) = lTc.getBasis().getColumn(2)[0];
+      extrinsics.at<double>(1,2) = lTc.getBasis().getColumn(2)[1];
+      extrinsics.at<double>(2,2) = lTc.getBasis().getColumn(2)[2];
+
+      // cv::Point3f camera_velodyne_translation;
+      // camera_velodyne_translation.x = -camera_velodyne_point.z;
+      // camera_velodyne_translation.y = camera_velodyne_point.x;
+      // camera_velodyne_translation.z = camera_velodyne_point.y;
+
+      // std::cout << "Rotation:" << camera_velodyne_rotation << std::endl << std::endl;
+      // std::cout << "Translation:" << camera_velodyne_translation << std::endl;
+      // std::cout << "RPY: " << get_rpy_from_matrix(camera_velodyne_rotation) << std::endl << std::endl;
+
+      // cv::Mat extrinsics = cv::Mat::eye(4,4, CV_64F);
+      // camera_velodyne_rotation.copyTo(extrinsics(cv::Rect_<float>(0,0,3,3)));
+      //
+      // std::cout << extrinsics << std::endl;
+      //
+      // extrinsics.at<double>(0,3) = camera_velodyne_translation.x;
+      // extrinsics.at<double>(1,3) = camera_velodyne_translation.y;
+      // extrinsics.at<double>(2,3) = camera_velodyne_translation.z;
 
       std::cout << extrinsics << std::endl;
 
